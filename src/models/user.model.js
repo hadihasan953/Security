@@ -16,7 +16,14 @@ const UserModel = (sequelize) => {
             unique: true,
         },
         password: DataTypes.STRING,
-    });
+        isActive: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+        },
+    },
+        {
+            paranoid: true,
+        });
     return User;
 };
 

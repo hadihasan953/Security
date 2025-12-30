@@ -9,26 +9,30 @@ export const registerUser = async (data) => {
     if (userExists)
         throw new Error("User already exists");
 
-        const hashedPassword = await hashPassword(password);
-        return User.create({
-            name,
-            email,
-            password: hashedPassword,
-        });
-    };
+    const hashedPassword = await hashPassword(password);
+    return User.create({
+        name,
+        email,
+        password: hashedPassword,
+    });
+};
 
-    export const loginUser = async (data) => {
-        const { email, password } = data;
+export const loginUser = async (data) => {
+    const { email, password } = data;
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) 
-            throw new Error("User not found");
+    const user = await User.findOne({ where: { email } });
+    if (!user)
+        throw new Error("User not found");
 
-        const valid = await comparePassword(password, user.password);
-        if (!valid)
-            throw new Error("Invalid email or password");
+    if (!user.isActive) {
+        throw new Error("User account is deactived");
+    }
 
-        const token = generateToken({ id: user.id });
+    const valid = await comparePassword(password, user.password);
+    if (!valid)
+        throw new Error("Invalid email or password");
 
-        return token;
-    };
+    const token = generateToken({ id: user.id });
+
+    return token;
+};
