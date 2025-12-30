@@ -7,13 +7,17 @@ const UserModel = (sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        name: DataTypes.STRING,
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
         email: {
             type: DataTypes.STRING,
             unique: true,
         },
         password: DataTypes.STRING,
     });
+    return User;
 };
 
 export default UserModel;

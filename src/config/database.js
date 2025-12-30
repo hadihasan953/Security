@@ -1,12 +1,15 @@
 import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
+import env from "./env.js";
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
+    env.db.name,
+    env.db.user,
+    env.db.password,
     {
-        host: process.env.DB_HOST,
-        dialect: "mysql",
+        host: env.db.host,
+        post: env.db.port,
+        dialect: env.db.dialect,
         logging: false,
     }
 );
