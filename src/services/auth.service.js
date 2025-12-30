@@ -1,4 +1,4 @@
-import { User } from "../models/index.js";
+import { User, Role } from "../models/index.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
 
@@ -10,11 +10,16 @@ export const registerUser = async (data) => {
         throw new Error("User already exists");
 
     const hashedPassword = await hashPassword(password);
-    return User.create({
+    const user = await User.create({
         name,
         email,
         password: hashedPassword,
     });
+    // Assign 'user' role by default
+    let role = await Role.findOne({ where: { name: "user" } });
+    if (!role) role = await Role.create({ name: "user" });
+    await user.addRole(role);
+    return user;
 };
 
 export const loginUser = async (data) => {
