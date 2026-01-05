@@ -1,6 +1,10 @@
-import { User, Role } from "../models/index.js";
+import { User } from "../models/index.js";
 
 export const disableUser = async (req, res) => {
+    const user = await User.findByPk(req.params.id);
+    if (user && user.email === "manageuser@system.com") {
+        return res.status(403).json({ message: "Cannot disable the primary manage_user account." });
+    }
     await User.update(
         { isActive: false },
         { where: { id: req.params.id } }
@@ -17,15 +21,10 @@ export const enableUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
+    const user = await User.findByPk(req.params.id);
+    if (user && user.email === "manageuser@system.com") {
+        return res.status(403).json({ message: "Cannot delete the primary manage_user account." });
+    }
     await User.destroy({ where: { id: req.params.id } });
     res.json({ message: "User deleted successfully" });
-};
-
-export const assignAdminRole = async (req, res) => {
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    let role = await Role.findOne({ where: { name: "admin" } });
-    if (!role) role = await Role.create({ name: "admin" });
-    await user.addRole(role);
-    res.json({ message: "User promoted to admin" });
 };

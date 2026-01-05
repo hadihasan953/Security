@@ -1,8 +1,8 @@
+// Use roles already attached to req.user by authenticate middleware
 export const authorizeRole = (roles = []) => {
-    return async (req, res, next) => {
+    return (req, res, next) => {
         try {
-            const userRoles = await req.user.getRoles();
-            const names = userRoles.map(r => r.name);
+            const names = req.user.roles || [];
             if (!roles.some(r => names.includes(r))) {
                 return res.status(403).json({ message: "Access denied" });
             }

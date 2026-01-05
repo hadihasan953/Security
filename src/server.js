@@ -5,11 +5,11 @@ import { sequelize } from "./models/index.js";
 import bcrypt from "bcrypt";
 import { User, Role } from "./models/index.js";
 
-// Create main_admin if not exists
-const MAIN_ADMIN_EMAIL = "mainadmin@system.com";
-const MAIN_ADMIN_PASSWORD = "MainAdmin@123";
+// Create manage_user if not exists
+const MANAGE_USER_EMAIL = "manageuser@system.com";
+const MANAGE_USER_PASSWORD = "ManageUser@123";
 async function ensureDefaultRoles() {
-    const roleNames = ["main_admin", "admin", "user"];
+    const roleNames = ["user", "manage_user"];
     for (const name of roleNames) {
         let role = await Role.findOne({ where: { name } });
         if (!role) {
@@ -19,32 +19,32 @@ async function ensureDefaultRoles() {
     }
 }
 
-async function createMainAdmin() {
-    let user = await User.findOne({ where: { email: MAIN_ADMIN_EMAIL } });
-    let role = await Role.findOne({ where: { name: "main_admin" } });
+async function createManageUser() {
+    let user = await User.findOne({ where: { email: MANAGE_USER_EMAIL } });
+    let role = await Role.findOne({ where: { name: "manage_user" } });
     if (!role) {
         await ensureDefaultRoles();
-        role = await Role.findOne({ where: { name: "main_admin" } });
+        role = await Role.findOne({ where: { name: "manage_user" } });
     }
-    if (!role) throw new Error("Failed to create or fetch main_admin role!");
+    if (!role) throw new Error("Failed to create or fetch manage_user role!");
 
     if (!user) {
-        const password = await bcrypt.hash(MAIN_ADMIN_PASSWORD, 10);
+        const password = await bcrypt.hash(MANAGE_USER_PASSWORD, 10);
         user = await User.create({
-            name: "Main Admin",
-            email: MAIN_ADMIN_EMAIL,
+            name: "Manage User",
+            email: MANAGE_USER_EMAIL,
             password,
             isActive: true,
         });
         await user.addRole(role);
-        console.log("✅ Main admin created");
+        console.log("✅ Manage user created");
     } else {
         const roles = await user.getRoles();
-        if (!roles.some(r => r.name === "main_admin")) {
+        if (!roles.some(r => r.name === "manage_user")) {
             await user.addRole(role);
-            console.log("✅ Main admin role assigned to existing user");
+            console.log("✅ Manage user role assigned to existing user");
         } else {
-            console.log("Main admin already exists");
+            console.log("Manage user already exists");
         }
     }
 }
@@ -53,7 +53,7 @@ async function createMainAdmin() {
 sequelize.sync().then(async () => {
     console.log("Database Connected ✔✔");
     await ensureDefaultRoles();
-    await createMainAdmin();
+    await createManageUser();
     app.listen(process.env.PORT, () => {
         console.log(`Server running on port ${process.env.PORT} 🚀🚀`);
     });
