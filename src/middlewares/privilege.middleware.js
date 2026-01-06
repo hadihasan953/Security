@@ -1,11 +1,10 @@
-// Privilege-based authorization middleware
 import { PRIVILEGES } from "../constants/privileges.js";
 
 export const authorizePrivilege = (privileges = []) => {
     return (req, res, next) => {
         try {
             const userPrivileges = req.user.privileges || [];
-            // If user has MANAGE_USER privilege, allow all actions
+            //MANAGE_USER privilege, allow all actions
             if (userPrivileges.includes(PRIVILEGES.MANAGE_USER)) {
                 return next();
             }
