@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 
-const RoleModel = (sequelize) => {
-    const Role = sequelize.define("Role", {
+const PrivilegeModel = (sequelize) => {
+    return sequelize.define("Privilege", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -10,11 +10,10 @@ const RoleModel = (sequelize) => {
         },
         name: {
             type: DataTypes.STRING,
-            allowNull: false,
             unique: true,
+            allowNull: false,
         },
     });
-    return Role;
 };
 
-export default RoleModel;
+export default PrivilegeModel;

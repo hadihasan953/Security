@@ -1,32 +1,35 @@
 import "./config/env.js";
 import app from "./app.js";
-import { sequelize } from "./models/index.js";
+import { sequelize, Privilege, User } from "./models/index.js";
+
 
 import bcrypt from "bcrypt";
-import { User, Role } from "./models/index.js";
 
-// Create manage_user if not exists
+
+// Create manage privilege and manage user if not exists
+const MANAGE_PRIVILEGE = "MANAGE_USER";
 const MANAGE_USER_EMAIL = "manageuser@system.com";
 const MANAGE_USER_PASSWORD = "ManageUser@123";
-async function ensureDefaultRoles() {
-    const roleNames = ["user", "manage_user"];
-    for (const name of roleNames) {
-        let role = await Role.findOne({ where: { name } });
-        if (!role) {
-            await Role.create({ name });
-            console.log(`✅ Role '${name}' created`);
+
+async function ensureDefaultPrivileges() {
+    const privilegeNames = ["MANAGE_USER", "DELETE_USER", "DISABLE_USER", "ENABLE_USER"];
+    for (const name of privilegeNames) {
+        let privilege = await Privilege.findOne({ where: { name } });
+        if (!privilege) {
+            await Privilege.create({ name });
+            console.log(`✅ Privilege '${name}' created`);
         }
     }
 }
 
 async function createManageUser() {
     let user = await User.findOne({ where: { email: MANAGE_USER_EMAIL } });
-    let role = await Role.findOne({ where: { name: "manage_user" } });
-    if (!role) {
-        await ensureDefaultRoles();
-        role = await Role.findOne({ where: { name: "manage_user" } });
+    let privilege = await Privilege.findOne({ where: { name: MANAGE_PRIVILEGE } });
+    if (!privilege) {
+        await ensureDefaultPrivileges();
+        privilege = await Privilege.findOne({ where: { name: MANAGE_PRIVILEGE } });
     }
-    if (!role) throw new Error("Failed to create or fetch manage_user role!");
+    if (!privilege) throw new Error("Failed to create or fetch MANAGE_USER privilege!");
 
     if (!user) {
         const password = await bcrypt.hash(MANAGE_USER_PASSWORD, 10);
@@ -36,15 +39,15 @@ async function createManageUser() {
             password,
             isActive: true,
         });
-        await user.addRole(role);
-        console.log("✅ Manage user created");
+        await user.addPrivilege(privilege);
+        console.log("✅ Manage user created and privilege assigned");
     } else {
-        const roles = await user.getRoles();
-        if (!roles.some(r => r.name === "manage_user")) {
-            await user.addRole(role);
-            console.log("✅ Manage user role assigned to existing user");
+        const privileges = await user.getPrivileges();
+        if (!privileges.some(p => p.name === MANAGE_PRIVILEGE)) {
+            await user.addPrivilege(privilege);
+            console.log("✅ MANAGE_USER privilege assigned to existing user");
         } else {
-            console.log("Manage user already exists");
+            console.log("Manage user already exists with privilege");
         }
     }
 }
@@ -52,7 +55,7 @@ async function createManageUser() {
 
 sequelize.sync().then(async () => {
     console.log("Database Connected ✔✔");
-    await ensureDefaultRoles();
+    await ensureDefaultPrivileges();
     await createManageUser();
     app.listen(process.env.PORT, () => {
         console.log(`Server running on port ${process.env.PORT} 🚀🚀`);

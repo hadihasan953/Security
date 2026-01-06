@@ -1,12 +1,13 @@
 import sequelize from "../config/database.js";
 
 import UserModel from "./user.model.js";
-import RoleModel from "./role.model.js";
+import PrivilegeModel from "./privilege.model.js";
 
 const User = UserModel(sequelize);
-const Role = RoleModel(sequelize);
+const Privilege = PrivilegeModel(sequelize);
 
-User.belongsToMany(Role, { through: "UserRoles" });
-Role.belongsToMany(User, { through: "UserRoles" });
+// User <-> Privilege (many-to-many)
+User.belongsToMany(Privilege, { through: "UserPrivileges" });
+Privilege.belongsToMany(User, { through: "UserPrivileges" });
 
-export { sequelize, User, Role };
+export { sequelize, User, Privilege };

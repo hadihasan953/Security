@@ -1,4 +1,4 @@
-import { User, Role } from "../models/index.js";
+import { User, Privilege } from "../models/index.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
 
@@ -15,10 +15,10 @@ export const registerUser = async (data) => {
         email,
         password: hashedPassword,
     });
-    // Assign 'user' role by default
-    let role = await Role.findOne({ where: { name: "user" } });
-    if (!role) role = await Role.create({ name: "user" });
-    await user.addRole(role);
+    // Assign 'USER' privilege by default
+    let privilege = await Privilege.findOne({ where: { name: "USER" } });
+    if (!privilege) privilege = await Privilege.create({ name: "USER" });
+    await user.addPrivilege(privilege);
     return user;
 };
 
