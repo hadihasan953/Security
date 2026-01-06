@@ -12,7 +12,7 @@ export const authenticate = async (req, res, next) => {
         const token = authHeader.split(" ")[1];
         const decoded = jwt.verify(token, env.jwt.secret);
 
-        // Fetch user and their privileges in a single query
+        // Fetch user and their privileges
         const user = await User.findByPk(decoded.id, {
             attributes: { exclude: ["password"] },
             include: [{ model: Privilege, through: { attributes: [] } }]
@@ -23,7 +23,7 @@ export const authenticate = async (req, res, next) => {
         if (!user.isActive) {
             return res.status(403).json({ message: "User account is disabled" });
         }
-        // Attach privileges
+        // privileges
         req.user = user;
         req.user.privileges = user.Privileges ? user.Privileges.map(p => p.name) : [];
         next();
