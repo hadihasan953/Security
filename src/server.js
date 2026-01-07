@@ -57,17 +57,12 @@ async function createAdminUser() {
 
 async function createManageUser() {
     let user = await User.findOne({ where: { email: MANAGE_USER_EMAIL } });
-    const privilegeNames = ["MANAGE_USER", "ENABLE_USER", "DISABLE_USER", "DELETE_USER"];
-    let privileges = [];
-    for (const name of privilegeNames) {
-        let privilege = await Privilege.findOne({ where: { name } });
-        if (!privilege) {
-            await ensureDefaultPrivileges();
-            privilege = await Privilege.findOne({ where: { name } });
-        }
-        if (!privilege) throw new Error(`Failed to create or fetch ${name} privilege!`);
-        privileges.push(privilege);
+    let privilege = await Privilege.findOne({ where: { name: MANAGE_PRIVILEGE } });
+    if (!privilege) {
+        await ensureDefaultPrivileges();
+        privilege = await Privilege.findOne({ where: { name: MANAGE_PRIVILEGE } });
     }
+    if (!privilege) throw new Error("Failed to create or fetch MANAGE_USER privilege!");
 
     if (!user) {
         const password = await bcrypt.hash(MANAGE_USER_PASSWORD, 10);
@@ -77,18 +72,16 @@ async function createManageUser() {
             password,
             isActive: true,
         });
-        await user.addPrivileges(privileges);
-        console.log("✅ Manage user created and all relevant privileges assigned");
+        await user.addPrivilege(privilege);
+        console.log("✅ Manage user created and privilege assigned");
     } else {
-        const userPrivileges = await user.getPrivileges();
-        const userPrivilegeNames = userPrivileges.map(p => p.name);
-        for (const privilege of privileges) {
-            if (!userPrivilegeNames.includes(privilege.name)) {
-                await user.addPrivilege(privilege);
-                console.log(`✅ ${privilege.name} privilege assigned to existing manage user`);
-            }
+        const privileges = await user.getPrivileges();
+        if (!privileges.some(p => p.name === MANAGE_PRIVILEGE)) {
+            await user.addPrivilege(privilege);
+            console.log("✅ MANAGE_USER privilege assigned to existing user");
+        } else {
+            console.log("Manage user already exists with privilege");
         }
-        console.log("Manage user already exists with all relevant privileges");
     }
 }
 
