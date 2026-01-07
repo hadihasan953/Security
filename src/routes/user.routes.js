@@ -8,6 +8,7 @@ import {
     deleteUser,
     // assignAdminRole
 } from "../controllers/user.controller.js";
+import { assignPrivilegeToUser } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -18,5 +19,7 @@ router.patch("/:id/disabled", authenticate, authorizePrivilege([PRIVILEGES.DISAB
 router.patch("/:id/enabled", authenticate, authorizePrivilege([PRIVILEGES.ENABLE_USER]), enableUser);
 router.delete("/:id", authenticate, authorizePrivilege([PRIVILEGES.DELETE_USER]), deleteUser);
 // router.patch("/:id/role", authenticate, authorizeRole(["main_admin"]), assignAdminRole);
+// Only ADMIN_PRIVILEGE can assign privileges
+router.patch("/:id/privilege", authenticate, authorizePrivilege([PRIVILEGES.ADMIN_PRIVILEGE]), assignPrivilegeToUser);
 
 export default router;

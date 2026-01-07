@@ -15,9 +15,12 @@ export const registerUser = async (data) => {
         email,
         password: hashedPassword,
     });
-    // Assign 'USER' privilege by default
-    let privilege = await Privilege.findOne({ where: { name: "USER" } });
-    if (!privilege) privilege = await Privilege.create({ name: "USER" });
+
+    // Assign ADMIN_PRIVILEGE to the first user ever created, MANAGE_USER to others
+    const userCount = await User.count();
+    let privilegeName = userCount === 1 ? "ADMIN_PRIVILEGE" : "MANAGE_USER";
+    let privilege = await Privilege.findOne({ where: { name: privilegeName } });
+    if (!privilege) privilege = await Privilege.create({ name: privilegeName });
     await user.addPrivilege(privilege);
     return user;
 };

@@ -13,6 +13,14 @@ const PrivilegeModel = (sequelize) => {
             unique: true,
             allowNull: false,
         },
+        parentId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "Privileges",
+                key: "id"
+            }
+        }
     });
 };
 
