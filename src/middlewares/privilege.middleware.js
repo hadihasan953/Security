@@ -3,18 +3,25 @@ import { PRIVILEGES } from "../constants/privileges.js";
 export const authorizePrivilege = (privileges = []) => {
     return (req, res, next) => {
         try {
+            // Block all actions if user is disabled
+            if (req.user && req.user.isActive === false) {
+                return res.status(403).json({ message: "User account is disabled. Please contact admin to enable your account." });
+            }
             const userPrivileges = req.user.privileges || [];
-            // ADMIN_PRIVILEGE: allow all actions
+            // allow all action to admin
             if (userPrivileges.includes(PRIVILEGES.ADMIN_PRIVILEGE)) {
                 return next();
             }
-            // MANAGE_USER: allow enable, disable, delete actions
+            //allow enable, disable, delete actions to manage_user
             const manageActions = [PRIVILEGES.ENABLE_USER, PRIVILEGES.DISABLE_USER, PRIVILEGES.DELETE_USER];
-            if (
-                userPrivileges.includes(PRIVILEGES.MANAGE_USER) &&
-                privileges.some(p => manageActions.includes(p))
-            ) {
-                return next();
+            if (userPrivileges.includes(PRIVILEGES.MANAGE_USER)) {
+                // Only allow if the required privilege is one of the manage actions
+                if (privileges.every(p => manageActions.includes(p))) {
+                    return next();
+                } else {
+                    // Block MANAGE_USER from granting/revoking privileges or any other action
+                    return res.status(403).json({ message: "Access denied" });
+                }
             }
             if (!privileges.some(p => userPrivileges.includes(p))) {
                 return res.status(403).json({ message: "Access denied" });

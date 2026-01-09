@@ -99,7 +99,7 @@ async function ensurePrivilegeHierarchy() {
     const [enableUser] = await Privilege.findOrCreate({ where: { name: "ENABLE_USER" } });
     const [disableUser] = await Privilege.findOrCreate({ where: { name: "DISABLE_USER" } });
 
-    // Set up hierarchy
+    // Hierarchy
     if (manageUser.parentId !== admin.id) {
         manageUser.parentId = admin.id;
         await manageUser.save();

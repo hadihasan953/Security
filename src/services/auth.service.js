@@ -16,12 +16,18 @@ export const registerUser = async (data) => {
         password: hashedPassword,
     });
 
-    // Assign ADMIN_PRIVILEGE to the first user ever created, MANAGE_USER to others
+    // Assign ADMIN_PRIVILEGE to the first user, MANAGE_USER to the second
     const userCount = await User.count();
-    let privilegeName = userCount === 1 ? "ADMIN_PRIVILEGE" : "MANAGE_USER";
-    let privilege = await Privilege.findOne({ where: { name: privilegeName } });
-    if (!privilege) privilege = await Privilege.create({ name: privilegeName });
-    await user.addPrivilege(privilege);
+    if (userCount === 1) {
+        let privilege = await Privilege.findOne({ where: { name: "ADMIN_PRIVILEGE" } });
+        if (!privilege) privilege = await Privilege.create({ name: "ADMIN_PRIVILEGE" });
+        await user.addPrivilege(privilege);
+    } else if (userCount === 2) {
+        let privilege = await Privilege.findOne({ where: { name: "MANAGE_USER" } });
+        if (!privilege) privilege = await Privilege.create({ name: "MANAGE_USER" });
+        await user.addPrivilege(privilege);
+    }
+    // by default Users after the first two get no privilege 
     return user;
 };
 

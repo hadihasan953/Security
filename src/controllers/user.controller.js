@@ -1,9 +1,13 @@
 import { User } from "../models/index.js";
 
 export const disableUser = async (req, res) => {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByPk(req.params.id, { include: [User.sequelize.models.Privilege] });
     if (user && user.email === "manageuser@system.com") {
         return res.status(403).json({ message: "Cannot disable the primary manage_user account." });
+    }
+    // Prevent disabling users with ADMIN_PRIVILEGE
+    if (user && user.Privileges && user.Privileges.some(p => p.name === "ADMIN_PRIVILEGE")) {
+        return res.status(403).json({ message: "Cannot disable a user with ADMIN_PRIVILEGE." });
     }
     await User.update(
         { isActive: false },
@@ -31,7 +35,6 @@ export const deleteUser = async (req, res) => {
 };
 
 import { Privilege } from "../models/index.js";
-import { PRIVILEGES } from "../constants/privileges.js";
 
 export const assignPrivilegeToUser = async (req, res) => {
     const { privilegeName } = req.body;
