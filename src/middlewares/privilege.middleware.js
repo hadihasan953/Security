@@ -3,10 +3,6 @@ import { PRIVILEGES } from "../constants/privileges.js";
 export const authorizePrivilege = (privileges = []) => {
     return (req, res, next) => {
         try {
-            // Block all actions if user is disabled
-            if (req.user && req.user.isActive === false) {
-                return res.status(403).json({ message: "User account is disabled. Please contact admin to enable your account." });
-            }
             const userPrivileges = req.user.privileges || [];
             // allow all action to admin
             if (userPrivileges.includes(PRIVILEGES.ADMIN_PRIVILEGE)) {

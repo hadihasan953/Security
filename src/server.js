@@ -1,18 +1,18 @@
 import "./config/env.js";
 import app from "./app.js";
 import { sequelize, Privilege, User } from "./models/index.js";
-
-
+import { PRIVILEGES } from "./constants/privileges.js";
 import bcrypt from "bcrypt";
 
-
 // Create manage privilege and manage user if not exists
-const MANAGE_PRIVILEGE = "MANAGE_USER";
+const MANAGE_PRIVILEGE = PRIVILEGES.MANAGE_USER;
 const MANAGE_USER_EMAIL = "manageuser@system.com";
 const MANAGE_USER_PASSWORD = "ManageUser@123";
 
+// Ensure all privileges from PRIVILEGES constant exist in the database
 async function ensureDefaultPrivileges() {
-    const privilegeNames = ["ADMIN_PRIVILEGE", "MANAGE_USER", "DELETE_USER", "DISABLE_USER", "ENABLE_USER"];
+    const privilegeNames = Object.values(PRIVILEGES);
+    console.log('Checking privileges:', privilegeNames);
     for (const name of privilegeNames) {
         let privilege = await Privilege.findOne({ where: { name } });
         if (!privilege) {
@@ -21,7 +21,7 @@ async function ensureDefaultPrivileges() {
         }
     }
 }
-const ADMIN_PRIVILEGE = "ADMIN_PRIVILEGE";
+const ADMIN_PRIVILEGE = PRIVILEGES.ADMIN_PRIVILEGE;
 const ADMIN_USER_EMAIL = "admin@system.com";
 const ADMIN_USER_PASSWORD = "AdminUser@123";
 
@@ -92,35 +92,44 @@ async function ensurePrivilegeHierarchy() {
     // Set all parentId to null to avoid FK issues
     await Privilege.update({ parentId: null }, { where: {} });
 
-    // Create or find privileges
-    const [admin] = await Privilege.findOrCreate({ where: { name: ADMIN_PRIVILEGE } });
-    const [manageUser] = await Privilege.findOrCreate({ where: { name: MANAGE_PRIVILEGE } });
-    const [deleteUser] = await Privilege.findOrCreate({ where: { name: "DELETE_USER" } });
-    const [enableUser] = await Privilege.findOrCreate({ where: { name: "ENABLE_USER" } });
-    const [disableUser] = await Privilege.findOrCreate({ where: { name: "DISABLE_USER" } });
+    // Define the privilege hierarchy as an array of objects
+    // Each object: { name: privilegeName, parent: parentPrivilegeName or null }
+    const hierarchy = [
+        { name: PRIVILEGES.ADMIN_PRIVILEGE, parent: null },
+        { name: PRIVILEGES.MANAGE_USER, parent: PRIVILEGES.ADMIN_PRIVILEGE },
+        { name: PRIVILEGES.View_DASHBOARD, parent: PRIVILEGES.ADMIN_PRIVILEGE },
+        { name: PRIVILEGES.DELETE_USER, parent: PRIVILEGES.MANAGE_USER },
+        { name: PRIVILEGES.ENABLE_USER, parent: PRIVILEGES.MANAGE_USER },
+        { name: PRIVILEGES.DISABLE_USER, parent: PRIVILEGES.MANAGE_USER },
+        // Add more privileges and their parents here as needed
+    ];
 
-    // Hierarchy
-    if (manageUser.parentId !== admin.id) {
-        manageUser.parentId = admin.id;
-        await manageUser.save();
+    // First, create or find all privileges
+    const privilegeMap = {};
+    for (const item of hierarchy) {
+        const [priv] = await Privilege.findOrCreate({ where: { name: item.name } });
+        privilegeMap[item.name] = priv;
     }
-    if (deleteUser.parentId !== manageUser.id) {
-        deleteUser.parentId = manageUser.id;
-        await deleteUser.save();
-    }
-    if (enableUser.parentId !== manageUser.id) {
-        enableUser.parentId = manageUser.id;
-        await enableUser.save();
-    }
-    if (disableUser.parentId !== manageUser.id) {
-        disableUser.parentId = manageUser.id;
-        await disableUser.save();
+
+    // Then, set parentId for each privilege
+    for (const item of hierarchy) {
+        const priv = privilegeMap[item.name];
+        let parentId = null;
+        if (item.parent) {
+            const parentPriv = privilegeMap[item.parent];
+            parentId = parentPriv ? parentPriv.id : null;
+        }
+        if (priv.parentId !== parentId) {
+            priv.parentId = parentId;
+            await priv.save();
+        }
     }
     console.log("Privileges and hierarchy ensured.");
 }
 
 sequelize.sync().then(async () => {
     console.log("Database Connected ✔✔");
+    await ensureDefaultPrivileges();
     await ensurePrivilegeHierarchy();
     await createAdminUser();
     await createManageUser();

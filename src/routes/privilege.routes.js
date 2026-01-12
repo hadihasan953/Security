@@ -34,4 +34,33 @@ router.delete("/:id/privileges", authenticate, authorizePrivilege([PRIVILEGES.MA
     }
 });
 
+// View dashboard route
+router.get(
+    "/dashboard/:id",
+    authenticate,
+    (req, res, next) => {
+        const userPrivileges = req.user.privileges || [];
+        const isAdmin = userPrivileges.includes(PRIVILEGES.ADMIN_PRIVILEGE);
+        const canViewDashboard = userPrivileges.includes(PRIVILEGES.View_DASHBOARD);
+        const requestedId = req.params.id;
+        const isSelf = String(req.user.id) === String(requestedId);
+        if (isAdmin || canViewDashboard || isSelf) {
+            return next();
+        }
+        return res.status(403).json({ message: "Access denied" });
+    },
+    async (req, res) => {
+        try {
+            const user = await User.findByPk(req.params.id, {
+                attributes: { exclude: ["password"] },
+            });
+            if (!user) return res.status(404).json({ message: "User not found" });
+            res.json({ message: `Dashboard for ${user.name}`, user });
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+);
+
+
 export default router;
