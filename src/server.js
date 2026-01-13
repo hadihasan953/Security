@@ -92,8 +92,7 @@ async function ensurePrivilegeHierarchy() {
     // Set all parentId to null to avoid FK issues
     await Privilege.update({ parentId: null }, { where: {} });
 
-    // Define the privilege hierarchy as an array of objects
-    // Each object: { name: privilegeName, parent: parentPrivilegeName or null }
+    // Define the privilege hierarchy {array of objects}
     const hierarchy = [
         { name: PRIVILEGES.ADMIN_PRIVILEGE, parent: null },
         { name: PRIVILEGES.MANAGE_USER, parent: PRIVILEGES.ADMIN_PRIVILEGE },
@@ -101,7 +100,6 @@ async function ensurePrivilegeHierarchy() {
         { name: PRIVILEGES.DELETE_USER, parent: PRIVILEGES.MANAGE_USER },
         { name: PRIVILEGES.ENABLE_USER, parent: PRIVILEGES.MANAGE_USER },
         { name: PRIVILEGES.DISABLE_USER, parent: PRIVILEGES.MANAGE_USER },
-        // Add more privileges and their parents here as needed
     ];
 
     // First, create or find all privileges

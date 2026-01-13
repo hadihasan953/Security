@@ -1,5 +1,4 @@
-import { User, Privilege, AuditLog } from "../models/index.js";
-import { logAudit } from "../utils/auditLogger.js";
+import { User, Privilege } from "../models/index.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 
 export const updatePassword = async (req, res) => {
@@ -23,15 +22,6 @@ export const updatePassword = async (req, res) => {
 
         user.password = await hashPassword(newPassword);
         await user.save();
-
-        // ✅ AUDIT LOG
-        await AuditLog.create({
-            actorUserId: userId,
-            action: "UPDATE_PASSWORD",
-            entityType: "User",
-            entityId: userId,
-            details: "User updated their own password"
-        });
 
         res.json({ message: "Password updated successfully." });
     } catch (error) {
@@ -61,15 +51,6 @@ export const disableUser = async (req, res) => {
         { where: { id: req.params.id } }
     );
 
-    // ✅ AUDIT LOG
-    await logAudit({
-        actorUserId: req.user.id,
-        action: "DISABLE_USER",
-        targetType: "User",
-        targetUserId: targetUser.id,
-        details: `User ${req.params.id} was disabled`
-    });
-
     res.json({ message: "User disabled successfully" });
 };
 
@@ -79,15 +60,6 @@ export const enableUser = async (req, res) => {
         { isActive: true },
         { where: { id: req.params.id } }
     );
-
-    // ✅ AUDIT LOG
-    await logAudit({
-        actorUserId: req.user.id,
-        action: "ENABLE_USER",
-        targetType: "User",
-        targetUserId: parseInt(req.params.id),
-        details: `User ${req.params.id} was enabled`
-    });
 
     res.json({ message: "User enabled successfully" });
 };
@@ -107,15 +79,6 @@ export const deleteUser = async (req, res) => {
     // Soft disable before delete
     await User.update({ isActive: false }, { where: { id: req.params.id } });
     await User.destroy({ where: { id: req.params.id } });
-
-    // ✅ AUDIT LOG
-    await logAudit({
-        actorUserId: req.user.id,
-        action: "DELETE_USER",
-        targetType: "User",
-        targetUserId: user.id,
-        details: `User ${req.params.id} was deleted`
-    });
 
     res.json({ message: "User deleted successfully" });
 };
@@ -137,15 +100,6 @@ export const assignPrivilegeToUser = async (req, res) => {
     }
 
     await user.setPrivileges([privilege]);
-
-    // ✅ AUDIT LOG
-    await AuditLog.create({
-        actorUserId: req.user.id,
-        action: "ASSIGN_PRIVILEGE",
-        entityType: "User",
-        entityId: req.params.id,
-        details: `Assigned privilege ${privilegeName} to user`
-    });
 
     res.json({ message: `Privilege ${privilegeName} assigned to user.` });
 };
