@@ -1,3 +1,4 @@
+
 import express from "express";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorizePrivilege } from "../middlewares/privilege.middleware.js";
@@ -6,11 +7,15 @@ import {
     disableUser,
     enableUser,
     deleteUser,
+    updatePassword,
     // assignAdminRole
 } from "../controllers/user.controller.js";
-import { assignPrivilegeToUser } from "../controllers/user.controller.js";
+// import { assignPrivilegeToUser } from "../controllers/user.controller.js";
 
 const router = express.Router();
+
+// updates password
+router.patch("/me/password", authenticate, updatePassword);
 
 
 // Only main_admin can manage users and assign admin role
