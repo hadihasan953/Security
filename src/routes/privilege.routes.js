@@ -36,13 +36,14 @@ router.delete("/:id/privileges", authenticate, authorizePrivilege([PRIVILEGES.MA
 });
 
 // View dashboard route
+import { PRIV } from "../services/privilege.service.js";
 router.get(
     "/dashboard/:id",
     authenticate, auditMiddleware,
     (req, res, next) => {
         const userPrivileges = req.user.privileges || [];
-        const isAdmin = userPrivileges.includes(PRIVILEGES.ADMIN_PRIVILEGE);
-        const canViewDashboard = userPrivileges.includes(PRIVILEGES.View_DASHBOARD);
+        const isAdmin = userPrivileges.includes(PRIV.ADMIN_PRIVILEGE);
+        const canViewDashboard = userPrivileges.includes(PRIV.View_DASHBOARD);
         const requestedId = req.params.id;
         const isSelf = String(req.user.id) === String(requestedId);
         if (isAdmin || canViewDashboard || isSelf) {

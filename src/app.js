@@ -16,6 +16,6 @@ app.use("/profile", profileRoutes);
 app.use("/users", userRoutes)
 app.use("/api", testRoutes);
 app.use("/privileges", privilegeRoutes);
-app.use("/logs", auditLogRoutes);
+app.use("/audit-logs", auditLogRoutes);
 
 export default app;

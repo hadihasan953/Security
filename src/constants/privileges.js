@@ -1,6 +1,4 @@
 // src/constants/privileges.js
-
-
 // Privilege hierarchy as array of objects with Children
 export const PRIVILEGES = [
     {

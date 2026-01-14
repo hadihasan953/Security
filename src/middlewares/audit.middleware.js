@@ -12,7 +12,7 @@ function resolveAuditAction(req) {
 
     // AUTH
     if (basePath.includes("auth") && method === "POST" && routePath === "/login")
-        return "AUTH_LOGIN";
+        return "LOGIN";
 
     if (basePath.includes("auth") && method === "POST" && routePath === "/register")
         return "AUTH_REGISTER";
@@ -40,8 +40,8 @@ function resolveAuditAction(req) {
         if (method === "DELETE" && routePath === "/:id/privileges")
             return "PRIVILEGE_REVOKE";
 
-        if (method === "get" && routePath === "/dashboard/:id")
-            return "PRIVILEGE_DASHBOARD_UPDATE";
+        if (method === "GET" && routePath === "/dashboard/:id")
+            return "VIEW_DASHBOARD";
     }
 
     return "UNKNOWN_ACTION";
@@ -78,8 +78,11 @@ export const auditMiddleware = (req, res, next) => {
 
             const targetUserId = resolveTargetUserId(req);
 
+            // For login/register, get user ID from the response or loginUserId stored
+            let actorUserId = req.user?.id || req.token?.userId || req.loginUserId || null;
+
             await logAudit({
-                actorUserId: req.user?.id || req.token?.userId || null,
+                actorUserId,
                 action,
                 targetUserId
             });

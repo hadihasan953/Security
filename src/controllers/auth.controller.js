@@ -12,7 +12,10 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const token = await loginUser(req.body);
+        const { token, userId } = await loginUser(req.body);
+
+        // Store userId in request for audit middleware
+        req.loginUserId = userId;
 
         res.json({ token });
     } catch (error) {

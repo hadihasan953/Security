@@ -48,5 +48,5 @@ export const loginUser = async (data) => {
 
     const token = generateToken({ id: user.id });
 
-    return token;
+    return { token, userId: user.id };
 };
