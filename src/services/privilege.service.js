@@ -39,7 +39,7 @@ export async function ensurePrivilegeHierarchy() {
             where: { name: node.name }
         });
 
-        // Set parent if exists
+        // Set parentId if a parent privilege is provided
         if (parentPrivilege && privilege.parentId !== parentPrivilege.id) {
             privilege.parentId = parentPrivilege.id;
             await privilege.save();

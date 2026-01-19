@@ -14,7 +14,8 @@ const router = express.Router();
 router.post(
     "/:id/privileges",
     authenticate,
-    authorizePrivilege([PRIVILEGES.MANAGE_USER]),
+    // Allow both ADMIN_PRIVILEGE and MANAGE_USER to grant privileges
+    authorizePrivilege([PRIVILEGES.ADMIN_PRIVILEGE, PRIVILEGES.MANAGE_USER]),
     auditMiddleware({ actionMap: AUDIT_ACTIONS, resolveTargetUserId }),
     async (req, res) => {
         try {
@@ -33,7 +34,8 @@ router.post(
 router.delete(
     "/:id/privileges",
     authenticate,
-    authorizePrivilege([PRIVILEGES.MANAGE_USER]),
+    // Allow both ADMIN_PRIVILEGE and MANAGE_USER to revoke privileges
+    authorizePrivilege([PRIVILEGES.ADMIN_PRIVILEGE, PRIVILEGES.MANAGE_USER]),
     auditMiddleware({ actionMap: AUDIT_ACTIONS, resolveTargetUserId }),
     async (req, res) => {
         try {
@@ -41,6 +43,15 @@ router.delete(
             const { privilege } = req.body;
             const priv = await Privilege.findOne({ where: { name: privilege } });
             if (!user || !priv) return res.status(404).json({ message: "User or privilege not found" });
+
+            // Prevent MANAGE_USER from revoking privileges from admin users
+            const targetUserPrivileges = await user.getPrivileges();
+            const isTargetAdmin = targetUserPrivileges.some(p => p.name === PRIVILEGES.ADMIN_PRIVILEGE);
+            const isRequesterAdmin = req.user.privileges && req.user.privileges.includes(PRIVILEGES.ADMIN_PRIVILEGE);
+            if (isTargetAdmin && !isRequesterAdmin) {
+                return res.status(403).json({ message: "Only admins can revoke privileges from admin users." });
+            }
+
             await user.removePrivilege(priv);
             res.json({ message: `Privilege '${privilege}' revoked from user.` });
         } catch (error) {
@@ -52,6 +63,7 @@ router.delete(
 router.get(
     "/dashboard/:id",
     authenticate,
+    auditMiddleware({ actionMap: AUDIT_ACTIONS, resolveTargetUserId }),
     (req, res, next) => {
         const userPrivileges = req.user.privileges || [];
         const isAdmin = userPrivileges.includes(PRIV.ADMIN_PRIVILEGE);
@@ -63,7 +75,6 @@ router.get(
         }
         return res.status(403).json({ message: "Access denied" });
     },
-    auditMiddleware({ actionMap: AUDIT_ACTIONS, resolveTargetUserId }),
     async (req, res) => {
         try {
             const user = await User.findByPk(req.params.id, {
